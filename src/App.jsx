@@ -2,16 +2,36 @@ import { useState, useEffect } from "react";
 import { MovieCard } from "./MovieCard";
 import "./index.css";
 
-const API_KEY = "a2e7da1d";
+const API_KEY = "a2e7da1d"; // Твой ключ
 
 function App() {
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
-  const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'error' | 'success'
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
+  
+  // Состояния для доп. заданий
+  const [page, setPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [yearFrom, setYearFrom] = useState("");
+  const [yearTo, setYearTo] = useState("");
+  const [history, setHistory] = useState([]);
 
-  // Функция запроса к API
-  const fetchMovies = async (searchQuery) => {
+  // Загружаем историю при старте
+  useEffect(() => {
+    const saved = localStorage.getItem("searchHistory");
+    if (saved) setHistory(JSON.parse(saved));
+  }, []);
+
+  const saveToHistory = (searchQuery) => {
+    if (!searchQuery.trim()) return;
+    // Оставляем только уникальные запросы, новый ставим в начало, обрезаем до 5
+    const newHistory = [searchQuery, ...history.filter(q => q !== searchQuery)].slice(0, 5);
+    setHistory(newHistory);
+    localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+  };
+
+  const fetchMovies = async (searchQuery, pageNum = 1) => {
     if (!searchQuery.trim()) return;
 
     setStatus("loading");
@@ -19,14 +39,12 @@ function App() {
 
     try {
       const res = await fetch(
-        `https://www.omdbapi.com/?s=${encodeURIComponent(searchQuery)}&apikey=${API_KEY}`
+        `https://www.omdbapi.com/?s=${encodeURIComponent(searchQuery)}&page=${pageNum}&apikey=${API_KEY}`
       );
-
       if (!res.ok) throw new Error("Ошибка сети. Проверьте интернет.");
 
       const data = await res.json();
 
-      // OMDb возвращает { Error: "Movie not found!" }, если ничего не найдено
       if (data.Error) {
         setMovies([]);
         setStatus("error");
@@ -35,7 +53,9 @@ function App() {
       }
 
       setMovies(data.Search || []);
+      setTotalResults(Number(data.totalResults));
       setStatus("success");
+      saveToHistory(searchQuery); // ДОП ЗАДАНИЕ 4: Сохраняем историю
     } catch (err) {
       setMovies([]);
       setStatus("error");
@@ -43,21 +63,20 @@ function App() {
     }
   };
 
-  // Обработчик ручного поиска (по кнопке или Enter)
   const handleSearch = () => {
-    fetchMovies(query);
+    setPage(1); // При новом поиске сбрасываем страницу на первую
+    fetchMovies(query, 1);
   };
 
-  // Обработчик нажатия Enter в поле ввода
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
+  // ДОП ЗАДАНИЕ 2: Пагинация
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    fetchMovies(query, newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Прокрутка наверх
   };
 
-  // Автопоиск с Debounce (доп. задание из лабы)
+  // Автопоиск с Debounce
   useEffect(() => {
-    // Если запрос слишком короткий — сбрасываем всё
     if (query.trim().length <= 2) {
       setMovies([]);
       setStatus("idle");
@@ -65,47 +84,81 @@ function App() {
       return;
     }
 
-    // Запускаем таймер на 500мс
     const timer = setTimeout(() => {
-      fetchMovies(query);
+      setPage(1);
+      fetchMovies(query, 1);
     }, 500);
 
-    // Функция очистки: если пользователь продолжает печатать, таймер сбрасывается
     return () => clearTimeout(timer);
-  }, [query]); // Следим только за изменениями query
+  }, [query]);
+
+  // ДОП ЗАДАНИЕ 3: Фильтрация по году на клиенте
+  const filteredMovies = movies.filter(movie => {
+    // Извлекаем первое 4-значное число из строки (на случай, если год это "2010–2015")
+    const movieYear = parseInt(movie.Year);
+    
+    const min = yearFrom ? parseInt(yearFrom) : 0;
+    const max = yearTo ? parseInt(yearTo) : 9999;
+
+    return movieYear >= min && movieYear <= max;
+  });
+
+  // Вычисляем максимальную страницу (OMDb отдает по 10 фильмов)
+  const totalPages = Math.ceil(totalResults / 10);
 
   return (
     <div className="app-container">
       <header className="header">
         <h1>🎬 Поиск фильмов</h1>
+        
+        {/* Поле поиска */}
         <div className="search-bar">
           <input
             type="text"
             placeholder="Например: Matrix, Inception..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
             className="search-input"
           />
           <button
             onClick={handleSearch}
-            disabled={status === "loading" || !query.trim()} // Блокируем кнопку во время загрузки
+            disabled={status === "loading" || !query.trim()}
             className="search-button"
           >
             {status === "loading" ? "Поиск..." : "Найти"}
           </button>
         </div>
+
+        {/* История поиска (ДОП ЗАДАНИЕ 4) */}
+        {history.length > 0 && (
+          <div className="history-box">
+            <span className="history-label">Вы недавно искали: </span>
+            {history.map((h, i) => (
+              <button 
+                key={i} 
+                className="history-tag"
+                onClick={() => { setQuery(h); handleSearch(); }}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Фильтр по годам (ДОП ЗАДАНИЕ 3) */}
+        {status === "success" && movies.length > 0 && (
+          <div className="year-filter">
+            <label>Год от: <input type="number" value={yearFrom} onChange={e => setYearFrom(e.target.value)} placeholder="1990" /></label>
+            <label>Год до: <input type="number" value={yearTo} onChange={e => setYearTo(e.target.value)} placeholder="2024" /></label>
+          </div>
+        )}
       </header>
 
       <main className="main-content">
-        {/* Состояние 1: Ожидание */}
         {status === "idle" && (
-          <p className="state-message">
-            Введите название фильма (минимум 3 символа) или нажмите «Найти».
-          </p>
+          <p className="state-message">Введите название фильма (минимум 3 символа).</p>
         )}
 
-        {/* Состояние 2: Загрузка */}
         {status === "loading" && (
           <div className="state-message">
             <div className="spinner"></div>
@@ -113,20 +166,45 @@ function App() {
           </div>
         )}
 
-        {/* Состояние 3: Ошибка (включая "Ничего не найдено") */}
         {status === "error" && (
           <div className="error-message">
-            <p>❌ {error === "Movie not found!" ? "Ничего не найдено по вашему запросу" : error}</p>
+            <p>❌ {error === "Movie not found!" ? "Ничего не найдено" : error}</p>
           </div>
         )}
 
-        {/* Состояние 4: Успех */}
-        {status === "success" && movies.length > 0 && (
-          <div className="movie-list">
-            {movies.map((movie) => (
-              <MovieCard key={movie.imdbID} movie={movie} />
-            ))}
-          </div>
+        {status === "success" && (
+          <>
+            {filteredMovies.length > 0 ? (
+              <div className="movie-list">
+                {filteredMovies.map((movie) => (
+                  <MovieCard key={movie.imdbID} movie={movie} apiKey={API_KEY} />
+                ))}
+              </div>
+            ) : (
+              <p className="state-message">Нет фильмов, подходящих под фильтр по годам.</p>
+            )}
+
+            {/* Пагинация (ДОП ЗАДАНИЕ 2) */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button 
+                  disabled={page === 1 || status === "loading"} 
+                  onClick={() => handlePageChange(page - 1)}
+                  className="page-btn"
+                >
+                  ← Назад
+                </button>
+                <span className="page-info">Страница {page} из {totalPages}</span>
+                <button 
+                  disabled={page >= totalPages || status === "loading"} 
+                  onClick={() => handlePageChange(page + 1)}
+                  className="page-btn"
+                >
+                  Вперед →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

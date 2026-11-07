@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f0f2f5;
   color: #1c1e21;
   color-scheme: light; /* Защита от темной темы браузера */
@@ -27,6 +27,7 @@ body {
 .header h1 {
   margin-bottom: 1.5rem;
   color: #111827;
+  font-size: 2rem;
 }
 
 /* --- Панель поиска --- */
@@ -126,9 +127,28 @@ body {
   color: #111827;
 }
 
-.movie-info p {
+.movie-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.movie-plot {
+  font-size: 0.85rem;
   color: #4b5563;
-  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-top: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.plot-loading {
+  color: #9ca3af;
+  font-style: italic;
 }
 
 /* --- Спиннер загрузки --- */
@@ -143,7 +163,95 @@ body {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
+}
+
+/* --- История поиска --- */
+.history-box {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.history-label {
+  margin-right: 8px;
+}
+
+.history-tag {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 12px;
+  margin: 0 5px 5px 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #374151;
+  transition: background 0.2s;
+}
+
+.history-tag:hover {
+  background: #d1d5db;
+}
+
+/* --- Фильтр по годам --- */
+.year-filter {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  align-items: center;
+}
+
+.year-filter label {
+  font-size: 0.9rem;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.year-filter input {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+/* --- Пагинация --- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.page-btn {
+  padding: 10px 20px;
+  background-color: #fff;
+  border: 2px solid #3b82f6;
+  color: #3b82f6;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.page-btn:disabled {
+  border-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 600;
 }
