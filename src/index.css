@@ -255,3 +255,93 @@ body {
   color: #374151;
   font-weight: 600;
 }
+/* --- Навигация (Navbar) --- */
+.navbar {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background: #f3f4f6;
+}
+
+.nav-link.active {
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* --- Страница деталей фильма --- */
+.movie-details {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.details-content {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.details-poster {
+  width: 300px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.details-info h1 {
+  margin-top: 0;
+  font-size: 2rem;
+  color: #111827;
+}
+
+.details-info p {
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Мобильная адаптация для деталей --- */
+@media (max-width: 600px) {
+  .details-content {
+    flex-direction: column;
+  }
+  .details-poster {
+    width: 100%;
+  }
+}
+.movie-poster-fallback {
+  width: 100%;
+  height: 320px;
+  background-color: #e2e8f0; /* Светло-синеватый фон */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.movie-poster-fallback span:first-child {
+  font-size: 3rem;
+}
